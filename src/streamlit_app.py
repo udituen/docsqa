@@ -65,10 +65,10 @@ with st.expander("💡 Try example questions"):
     for q in EXAMPLE_QUESTIONS:
         st.markdown(f"- {q}")
 
-uploaded_file = st.file_uploader("Upload your `.txt` file", type=["txt"])
+uploaded_file = st.file_uploader("Upload your file", type=["txt","pdf"])
 query = st.text_input("Ask a question:")
 
-if uploaded_file:
+if uploaded_file is not None:
     st.success("file uploaded")
     docs = read_uploaded_file(uploaded_file)
     retriever = build_retriever(docs)
