@@ -5,52 +5,6 @@ from langchain.chains import RetrievalQA
 from langchain_community.llms import HuggingFacePipeline
 from transformers import pipeline
 
-# # ----------------------
-# # Helper: Load and process uploaded file
-# # ----------------------
-# def read_uploaded_file(uploaded_file):
-#     text = uploaded_file.read().decode("utf-8")
-#     docs = text.split("\n")
-#     return docs
-
-# # ----------------------
-# # Load lightweight LLM
-# # ----------------------e
-# @st.cache_resource
-# def load_llm():
-#     pipe = pipeline("text-generation", model="google/flan-t5-small", max_new_tokens=256)
-#     return HuggingFacePipeline(pipeline=pipe)
-
-# # ----------------------
-# # Build retriever from uploaded content
-# # ----------------------
-# def build_retriever(docs):
-#     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-#     db = FAISS.from_texts(docs, embeddings)
-#     return db.as_retriever()
-
-# # ----------------------
-# # Streamlit UI
-# # ----------------------
-
-# uploaded_file = st.file_uploader("Upload a `.txt` file with agricultural content", type=["txt"])
-# query = st.text_input("Ask a question based on your uploaded file:")
-
-# # Check if user uploaded a file
-# if uploaded_file:
-#     docs = read_uploaded_file(uploaded_file)
-#     retriever = build_retriever(docs)
-#     llm = load_llm()
-#     qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
-
-#     if query:
-#         with st.spinner("Generating answer..."):
-#             result = qa_chain.run(query)
-#         st.success(result)
-# else:
-#     st.info("Please upload a `.txt` file to begin.")
-
-
 # ----------------------
 # Sample Text Content
 # ----------------------
@@ -61,23 +15,20 @@ Composting is an organic way to enrich the soil.
 Weed management is essential for higher productivity."""
 
 EXAMPLE_QUESTIONS = [
-    "What is this document about?"
+    "What is this document about?",
     "What is the role of fertilizers in agriculture?",
     "Why is crop rotation important?",
     "How does composting help farming?",
 ]
 
-# ----------------------
+
 # Helper: Read uploaded file
-# ----------------------
 def read_uploaded_file(uploaded_file):
     text = uploaded_file.read().decode("utf-8")
     docs = text.split("\n")
     return docs
 
-# ----------------------
 # Load lightweight LLM
-# ----------------------
 @st.cache_resource
 def load_llm():
     pipe = pipeline("text-generation", model="google/flan-t5-small", max_new_tokens=256)
@@ -85,9 +36,8 @@ def load_llm():
 
 # extract 
 
-# ----------------------
+
 # Build retriever from uploaded content
-# ----------------------
 def build_retriever(docs):
     # if docs.type == pdf
     # use langchain pymupdf to extract the text from the document
@@ -96,9 +46,8 @@ def build_retriever(docs):
     db = FAISS.from_texts(docs, embeddings)
     return db.as_retriever()
 
-# ----------------------
+
 # Streamlit UI
-# ----------------------
 st.title("DocsQA: Upload & Ask")
 
 st.markdown("Upload a text file and ask questions about its contents.")
@@ -120,6 +69,7 @@ uploaded_file = st.file_uploader("Upload your `.txt` file", type=["txt"])
 query = st.text_input("Ask a question:")
 
 if uploaded_file:
+    st.success("file uploaded")
     docs = read_uploaded_file(uploaded_file)
     retriever = build_retriever(docs)
     llm = load_llm()
