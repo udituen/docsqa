@@ -66,7 +66,7 @@ from transformers import pipeline
 #         st.markdown(f"- {q}")
 
 uploaded_file = st.file_uploader("Upload your file", type=["txt","pdf"])
-if uploaded_file:
+if uploaded_file is not None:
     data = uploaded_file.read()
     st.info(data)
 query = st.text_input("Ask a question:")
