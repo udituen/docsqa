@@ -10,7 +10,7 @@ WORKDIR /app
 #     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
-COPY src/ ./src/
+COPY ./ ./
 
 RUN pip3 install -r requirements.txt
 
