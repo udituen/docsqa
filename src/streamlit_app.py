@@ -66,8 +66,9 @@ with st.expander("💡 Try example questions"):
         st.markdown(f"- {q}")
 
 uploaded_file = st.file_uploader("Upload your file", type=["txt","pdf"])
-data = uploaded_file.read()
-st.info(data)
+if uploaded_file:
+    data = uploaded_file.read()
+    st.info(data)
 query = st.text_input("Ask a question:")
 
 if uploaded_file is not None:
