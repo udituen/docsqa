@@ -1,9 +1,9 @@
 import streamlit as st
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.chains import RetrievalQA
-from langchain_community.llms import HuggingFacePipeline
-from transformers import pipeline
+# from langchain_community.vectorstores import FAISS
+# from langchain_community.embeddings import HuggingFaceEmbeddings
+# from langchain.chains import RetrievalQA
+# from langchain_community.llms import HuggingFacePipeline
+# from transformers import pipeline
 
 # # ----------------------
 # # Sample Text Content
