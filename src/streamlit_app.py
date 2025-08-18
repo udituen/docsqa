@@ -77,6 +77,8 @@ if uploaded_file is not None:
 
 query = st.text_input("Ask a question:")
 
+if query is not None:
+    st.spinner("Generating answer...")
 # if uploaded_file is not None:
 #     st.success("file uploaded")
 #     docs = read_uploaded_file(uploaded_file)
