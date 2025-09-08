@@ -14,8 +14,7 @@ COPY ./ ./
 
 RUN pip3 install -r requirements.txt
 
-RUN mkdir -p /root/.streamlit
-COPY src/config.toml /root/.streamlit/config.toml
+ENV ENABLE_XSRF_PROTECTION=false
 
 EXPOSE 8501
 
