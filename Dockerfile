@@ -2,19 +2,12 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# RUN apt-get update && apt-get install -y \
-#     build-essential \
-#     curl \
-#     software-properties-common \
-#     git \
-#     && rm -rf /var/lib/apt/lists/*
-
 COPY requirements.txt ./
 COPY ./ ./
 
 RUN pip3 install -r requirements.txt
 
-ENV ENABLE_XSRF_PROTECTION=false
+ENV STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
 
 EXPOSE 8501
 
