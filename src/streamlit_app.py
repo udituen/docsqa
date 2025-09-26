@@ -27,8 +27,8 @@ EXAMPLE_QUESTIONS = [
     "Why is crop rotation important?",
     "How does composting help farming?",
 ]
-HF_TOKEN = st.secrets["HF_TOKEN"]
 
+HF_TOKEN = st.secrets["HF_TOKEN"]
 headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 prompt = PromptTemplate(
@@ -39,7 +39,7 @@ prompt = PromptTemplate(
         "Context:\n{context}\n\n"
         "Question: {input}\n"
     )
-    )
+)
 
 # Helper: Read uploaded file
 def read_uploaded_file(uploaded_file):
