@@ -7,4 +7,8 @@ langchain
 transformers
 sentence-transformers
 faiss-cpu
-langchain-community
+langchain-community  
+accelerate  
+bitsandbytes
+torch       
+     

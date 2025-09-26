@@ -4,6 +4,13 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
 from langchain_community.llms import HuggingFacePipeline
 from transformers import pipeline
+from langchain.prompts import PromptTemplate
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_text_splitters.character import RecursiveCharacterTextSplitter
+from langchain.docstore.document import Document
+from langchain.chains import create_retrieval_chain
+from langchain_community.llms import Ollama
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 # ----------------------
 # Sample Text Content
@@ -21,29 +28,65 @@ EXAMPLE_QUESTIONS = [
     "How does composting help farming?",
 ]
 
+prompt = PromptTemplate(
+    input_variables=["context", "question"],
+    template=(
+        "You are a document question and answer expert.\n"
+        "Use the context below to answer the question.\n"
+        "Context:\n{context}\n\n"
+        "Question: {input}\n"
+    )
+    )
 
 # Helper: Read uploaded file
 def read_uploaded_file(uploaded_file):
-    text = uploaded_file.read().decode("utf-8")
-    docs = text.split("\n")
+    text = uploaded_file.read()
+    data = text.decode("utf-8")
+    docs = data.split("\n")
     return docs
 
 # Load lightweight LLM
 @st.cache_resource
 def load_llm():
-    pipe = pipeline("text-generation", model="google/flan-t5-small", max_new_tokens=256)
-    return HuggingFacePipeline(pipeline=pipe)
 
+    model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
+    # model_name = "meta-llama/Llama-2-7b-chat-hf"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto", device_map="auto", load_in_8bit=True)
+    pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=256)
+    
+    return HuggingFacePipeline(pipeline=pipe)
+    # pipe = pipeline("text-generation", model="google/flan-t5-small", max_new_tokens=256)
+    # return HuggingFacePipeline(pipeline=pipe)
+    
 # extract 
+def get_chunks(file_content):
+    """
+    split document into chunks
+    """
+    # initialise the recursive method
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=100,
+        chunk_overlap=10
+    )
+    # chunks = []
+    docs = [Document(page_content=file_content)]
+    chunks = splitter.split_documents(docs)
+    # st.info(chunks)
+    return chunks
 
 
 # Build retriever from uploaded content
 def build_retriever(docs):
     # if docs.type == pdf
     # use langchain pymupdf to extract the text from the document
+    # st.info(docs)
+
+    # split into chunks
+    chunks = get_chunks(docs)
 
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    db = FAISS.from_texts(docs, embeddings)
+    db = FAISS.from_documents(chunks, embeddings)
     return db.as_retriever()
 
 
@@ -61,7 +104,7 @@ st.download_button(
 )
 
 # Show example questions
-with st.expander("💡 Try example questions"):
+with st.expander("Try example questions"):
     for q in EXAMPLE_QUESTIONS:
         st.markdown(f"- {q}")
 
@@ -71,7 +114,8 @@ if uploaded_file is not None:
     data = uploaded_file.read()
 
     if uploaded_file.type == "text/plain":
-        st.text_area("Content", data.decode("utf-8"), height=300)
+        # st.text_area("Content", data.decode("utf-8"), height=300)
+        st.info("Uploaded txt file")
     else:
         st.info(f"Uploaded {len(data)} bytes (PDF or other format)")
 query = st.text_input("Ask a question ")
@@ -79,13 +123,23 @@ query = st.text_input("Ask a question ")
 if uploaded_file is not None:
     st.success("file uploaded")
     docs = read_uploaded_file(uploaded_file)
-    retriever = build_retriever(docs)
+    # st.text(data.decode("utf-8"))
+    
+    retriever = build_retriever(data.decode("utf-8"))
     llm = load_llm()
-    qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+
+    # qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+    combine_docs_chain = create_stuff_documents_chain(llm, prompt)
+
+    qa_chain = create_retrieval_chain(retriever, combine_docs_chain)
 
     if query:
         with st.spinner("Generating answer..."):
-            result = qa_chain.run(query)
-        st.success(result)
+        
+            result = qa_chain.invoke({"input":query})
+            answer =  result["answer"].split("\nAnswer:")[-1].strip()
+            
+        st.success(answer)
+
 else:
     st.info("Please upload a `.txt` file or use the sample provided.")
