@@ -27,6 +27,9 @@ EXAMPLE_QUESTIONS = [
     "Why is crop rotation important?",
     "How does composting help farming?",
 ]
+HF_TOKEN = st.secrets["HF_TOKEN"]
+
+headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 prompt = PromptTemplate(
     input_variables=["context", "question"],
@@ -121,7 +124,7 @@ if uploaded_file is not None:
 query = st.text_input("Ask a question ")
 
 if uploaded_file is not None:
-    st.success("file uploaded")
+    # st.success("file uploaded")
     docs = read_uploaded_file(uploaded_file)
     # st.text(data.decode("utf-8"))
     
