@@ -11,7 +11,7 @@ from langchain.docstore.document import Document
 from langchain.chains import create_retrieval_chain
 from langchain_community.llms import Ollama
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-
+import os
 # ----------------------
 # Sample Text Content
 # ----------------------
@@ -28,8 +28,12 @@ EXAMPLE_QUESTIONS = [
     "How does composting help farming?",
 ]
 
-HF_TOKEN = st.secrets["HF_TOKEN"]
-headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+# HF_TOKEN = st.secrets["HF_TOKEN"]
+# headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+# os.environ["HUGGINGFACEHUB_API_TOKEN"] = st.secrets["HF_TOKEN"]
+
+HF_TOKEN = st.secrets["HUGGINGFACE_TOKEN"]["HF_TOKEN"]
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = HF_TOKEN
 
 prompt = PromptTemplate(
     input_variables=["context", "question"],
@@ -55,7 +59,7 @@ def load_llm():
     model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
     # model_name = "meta-llama/Llama-2-7b-chat-hf"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto", device_map="auto", load_in_8bit=True, token=HF_TOKEN)
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto", device_map="auto", load_in_8bit=True)
     pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=256)
     
     return HuggingFacePipeline(pipeline=pipe)
