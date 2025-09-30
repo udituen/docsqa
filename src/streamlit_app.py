@@ -97,7 +97,7 @@ def get_chunks(file_content):
 
 
 # Build retriever from uploaded content
-@st.cache_resource
+# @st.cache_resource
 def build_retriever(docs):
 
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
