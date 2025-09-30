@@ -10,5 +10,5 @@ faiss-cpu
 langchain-community  
 accelerate  
 bitsandbytes
-torch       
-     
+torch 
+streamlit[pdf]

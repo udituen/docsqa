@@ -12,6 +12,9 @@ from langchain.chains import create_retrieval_chain
 from langchain_community.llms import Ollama
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 import os
+import itertools
+from langchain_community.document_loaders import PyMuPDFLoader
+
 # ----------------------
 # Sample Text Content
 # ----------------------
@@ -28,11 +31,7 @@ EXAMPLE_QUESTIONS = [
     "How does composting help farming?",
 ]
 
-# HF_TOKEN = st.secrets["HF_TOKEN"]
-# headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-# os.environ["HUGGINGFACEHUB_API_TOKEN"] = st.secrets["HF_TOKEN"]
-
-HF_TOKEN = st.secrets["HUGGINGFACE_TOKEN"]["HF_TOKEN"]
+HF_TOKEN = st.secrets["HF_TOKEN"]
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = HF_TOKEN
 
 prompt = PromptTemplate(
@@ -47,10 +46,21 @@ prompt = PromptTemplate(
 
 # Helper: Read uploaded file
 def read_uploaded_file(uploaded_file):
-    text = uploaded_file.read()
-    data = text.decode("utf-8")
-    docs = data.split("\n")
-    return docs
+    return uploaded_file.read().decode("utf-8")
+
+def ingest_pdf(file_name):
+    """
+    loads content of file using pymupdf
+    input (str): file names and file path
+    output (list): file content divided by pages
+    """
+    pages = []
+    loader = PyMuPDFLoader(file_name)
+
+    for page in loader.alazy_load():
+        pages.append(page)
+
+    return pages
 
 # Load lightweight LLM
 @st.cache_resource
@@ -59,7 +69,7 @@ def load_llm():
     model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
     # model_name = "meta-llama/Llama-2-7b-chat-hf"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto", device_map="auto", load_in_8bit=True)
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto", device_map="auto")
     pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=256)
     
     return HuggingFacePipeline(pipeline=pipe)
@@ -76,24 +86,21 @@ def get_chunks(file_content):
         chunk_size=100,
         chunk_overlap=10
     )
-    # chunks = []
-    docs = [Document(page_content=file_content)]
-    chunks = splitter.split_documents(docs)
-    # st.info(chunks)
-    return chunks
+    chunks = []
+
+    for page in file_content:
+        docs = [Document(page_content=page.page_content)]
+        texts = splitter.split_documents(docs)
+        chunks.append(texts)
+
+    return list(itertools.chain(*chunks))
 
 
 # Build retriever from uploaded content
 def build_retriever(docs):
-    # if docs.type == pdf
-    # use langchain pymupdf to extract the text from the document
-    # st.info(docs)
-
-    # split into chunks
-    chunks = get_chunks(docs)
 
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    db = FAISS.from_documents(chunks, embeddings)
+    db = FAISS.from_texts(docs, embeddings)
     return db.as_retriever()
 
 
@@ -129,8 +136,13 @@ query = st.text_input("Ask a question ")
 
 if uploaded_file is not None:
     # st.success("file uploaded")
-    docs = read_uploaded_file(uploaded_file)
-    # st.text(data.decode("utf-8"))
+    if uploaded_file.type == "text/plain":
+        # st.text_area("Content", data.decode("utf-8"), height=300)
+        st.info("Uploaded txt file")
+        docs = read_uploaded_file(uploaded_file)
+    else:
+        st.info(f"Uploaded {data} bytes (PDF or other format)")
+        docs = st.pdf(uploaded_file.read())
     
     retriever = build_retriever(data.decode("utf-8"))
     llm = load_llm()
@@ -142,11 +154,10 @@ if uploaded_file is not None:
 
     if query:
         with st.spinner("Generating answer..."):
-        
             result = qa_chain.invoke({"input":query})
+            # st.info(result)
             answer =  result["answer"].split("\nAnswer:")[-1].strip()
-            
         st.success(answer)
 
 else:
-    st.info("Please upload a `.txt` file or use the sample provided.")
+    st.info("Please upload a `.txt or .pdf` file or use the sample provided.")
