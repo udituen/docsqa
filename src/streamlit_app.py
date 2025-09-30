@@ -69,7 +69,7 @@ def load_llm():
     model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
     # model_name = "meta-llama/Llama-2-7b-chat-hf"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype="auto", device_map="auto")
+    model = AutoModelForCausalLM.from_pretrained(model_name, dtype="auto", device_map="auto")
     pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=256)
     
     return HuggingFacePipeline(pipeline=pipe)
