@@ -100,7 +100,7 @@ def get_chunks(file_content):
 @st.cache_resource
 def build_retriever(docs):
 
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2",device='cpu')
+    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     db = FAISS.from_texts(docs, embeddings)
     return db.as_retriever()
 
