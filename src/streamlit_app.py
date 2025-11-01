@@ -69,10 +69,6 @@ if uploaded_file is not None:
     # Read ONCE and store in variable
     file_content = uploaded_file.read()
     
-    if uploaded_file.type == "text/plain":
-        st.text_area("Content", file_content.decode("utf-8"), height=300)
-    else:
-        st.info(f"Uploaded {len(file_content)} bytes (PDF or other format)")
 
 query = st.text_input("Ask a question")
 
