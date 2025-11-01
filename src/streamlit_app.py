@@ -23,18 +23,23 @@ EXAMPLE_QUESTIONS = [
 
 # Helper: Read uploaded file
 def read_uploaded_file(uploaded_file):
-    # Reset pointer before reading
     uploaded_file.seek(0)
     text = uploaded_file.read().decode("utf-8")
     docs = text.split("\n")
-    # Filter out empty lines
     docs = [doc.strip() for doc in docs if doc.strip()]
     return docs
 
-# Load lightweight LLM
+# Load lightweight LLM - FIXED VERSION
 @st.cache_resource
 def load_llm():
-    pipe = pipeline("text-generation", model="google/flan-t5-small", max_new_tokens=256)
+    # Use text2text-generation for FLAN-T5
+    pipe = pipeline(
+        "text2text-generation",  # ← Changed from text-generation
+        model="google/flan-t5-small",
+        max_length=256,  # ← Changed from max_new_tokens
+        temperature=0.7,
+        top_p=0.95
+    )
     return HuggingFacePipeline(pipeline=pipe)
 
 # Build retriever from uploaded content
@@ -64,32 +69,42 @@ with st.expander("💡 Try example questions"):
 uploaded_file = st.file_uploader("Upload your file", type=["txt", "pdf"])
 
 if uploaded_file is not None:
-    st.write("Filename:", uploaded_file.name)
+    st.write("📁 Filename:", uploaded_file.name)
     
-    # Read ONCE and store in variable
     file_content = uploaded_file.read()
     
+    if uploaded_file.type == "text/plain":
+        st.text_area("Content Preview", file_content.decode("utf-8"), height=200)
+    else:
+        st.info(f"Uploaded {len(file_content)} bytes (PDF or other format)")
 
 query = st.text_input("Ask a question")
 
 if uploaded_file is not None:
-    st.success("File uploaded")
-    
-    # Pass the uploaded file object (will reset pointer inside function)
     docs = read_uploaded_file(uploaded_file)
     
-    # Debug: Show how many docs were extracted
-    st.write(f"Debug: Extracted {len(docs)} text chunks")
+    st.info(f"✅ Extracted {len(docs)} text chunks from document")
     
     if len(docs) > 0:
         retriever = build_retriever(docs)
         llm = load_llm()
-        qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=llm, 
+            retriever=retriever,
+            return_source_documents=True  # Optional: see source docs
+        )
         
         if query:
             with st.spinner("Generating answer..."):
-                result = qa_chain.run(query)
-            st.success(result)
+                result = qa_chain({"query": query})
+                
+            st.success("Answer:")
+            st.write(result["result"])
+            
+            # Show source documents
+            with st.expander("📄 View source documents"):
+                for i, doc in enumerate(result["source_documents"]):
+                    st.write(f"**Source {i+1}:** {doc.page_content}")
     else:
         st.error("No content found in file. Please check your file.")
 else:
