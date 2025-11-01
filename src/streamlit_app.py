@@ -21,11 +21,14 @@ EXAMPLE_QUESTIONS = [
     "How does composting help farming?",
 ]
 
-
 # Helper: Read uploaded file
 def read_uploaded_file(uploaded_file):
+    # Reset pointer before reading
+    uploaded_file.seek(0)
     text = uploaded_file.read().decode("utf-8")
     docs = text.split("\n")
+    # Filter out empty lines
+    docs = [doc.strip() for doc in docs if doc.strip()]
     return docs
 
 # Load lightweight LLM
@@ -34,18 +37,11 @@ def load_llm():
     pipe = pipeline("text-generation", model="google/flan-t5-small", max_new_tokens=256)
     return HuggingFacePipeline(pipeline=pipe)
 
-# extract 
-
-
 # Build retriever from uploaded content
 def build_retriever(docs):
-    # if docs.type == pdf
-    # use langchain pymupdf to extract the text from the document
-
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
     db = FAISS.from_texts(docs, embeddings)
     return db.as_retriever()
-
 
 # Streamlit UI
 st.title("DocsQA: Upload & Ask")
@@ -65,27 +61,40 @@ with st.expander("💡 Try example questions"):
     for q in EXAMPLE_QUESTIONS:
         st.markdown(f"- {q}")
 
-uploaded_file = st.file_uploader("Upload your file", type=["txt","pdf"])
+uploaded_file = st.file_uploader("Upload your file", type=["txt", "pdf"])
+
 if uploaded_file is not None:
     st.write("Filename:", uploaded_file.name)
-    data = uploaded_file.read()
-
+    
+    # Read ONCE and store in variable
+    file_content = uploaded_file.read()
+    
     if uploaded_file.type == "text/plain":
-        st.text_area("Content", data.decode("utf-8"), height=300)
+        st.text_area("Content", file_content.decode("utf-8"), height=300)
     else:
-        st.info(f"Uploaded {len(data)} bytes (PDF or other format)")
-query = st.text_input("Ask a question ")
+        st.info(f"Uploaded {len(file_content)} bytes (PDF or other format)")
+
+query = st.text_input("Ask a question")
 
 if uploaded_file is not None:
-    st.success("file uploaded")
+    st.success("File uploaded")
+    
+    # Pass the uploaded file object (will reset pointer inside function)
     docs = read_uploaded_file(uploaded_file)
-    retriever = build_retriever(docs)
-    llm = load_llm()
-    qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
-
-    if query:
-        with st.spinner("Generating answer..."):
-            result = qa_chain.run(query)
-        st.success(result)
+    
+    # Debug: Show how many docs were extracted
+    st.write(f"Debug: Extracted {len(docs)} text chunks")
+    
+    if len(docs) > 0:
+        retriever = build_retriever(docs)
+        llm = load_llm()
+        qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+        
+        if query:
+            with st.spinner("Generating answer..."):
+                result = qa_chain.run(query)
+            st.success(result)
+    else:
+        st.error("No content found in file. Please check your file.")
 else:
     st.info("Please upload a `.txt` file or use the sample provided.")
