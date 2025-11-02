@@ -73,18 +73,11 @@ if uploaded_file is not None:
     
     file_content = uploaded_file.read()
     
-    if uploaded_file.type == "text/plain":
-        st.text_area("Content Preview", file_content.decode("utf-8"), height=200)
-    else:
-        st.info(f"Uploaded {len(file_content)} bytes (PDF or other format)")
-
 query = st.text_input("Ask a question")
 
 if uploaded_file is not None:
     docs = read_uploaded_file(uploaded_file)
-    
-    st.info(f"✅ Extracted {len(docs)} text chunks from document")
-    
+
     if len(docs) > 0:
         retriever = build_retriever(docs)
         llm = load_llm()
