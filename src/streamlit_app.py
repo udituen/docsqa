@@ -21,10 +21,20 @@ EXAMPLE_QUESTIONS = [
     "How does composting help farming?",
 ]
 
-# Helper: Read uploaded file
 def read_uploaded_file(uploaded_file):
     uploaded_file.seek(0)
-    text = uploaded_file.read().decode("utf-8")
+    
+    if uploaded_file.type == "application/pdf":
+        # Handle PDF files
+        pdf_reader = PdfReader(io.BytesIO(uploaded_file.read()))
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text() + "\n"
+    else:
+        # Handle text files
+        text = uploaded_file.read().decode("utf-8")
+    
+    # Split into chunks by lines
     docs = text.split("\n")
     docs = [doc.strip() for doc in docs if doc.strip()]
     return docs
@@ -70,9 +80,18 @@ uploaded_file = st.file_uploader("Upload your file", type=["txt", "pdf"])
 
 if uploaded_file is not None:
     st.write("📁 Filename:", uploaded_file.name)
+    st.write("📋 File type:", uploaded_file.type)
     
-    file_content = uploaded_file.read()
-    
+    # Show preview for text files only
+    if uploaded_file.type == "text/plain":
+        uploaded_file.seek(0)
+        file_content = uploaded_file.read()
+        st.text_area("Content Preview", file_content.decode("utf-8"), height=200)
+    else:
+        st.info(f"📄 PDF uploaded: {uploaded_file.name}")
+
+query = st.text_input("Ask a question")
+  
 query = st.text_input("Ask a question")
 
 if uploaded_file is not None:
