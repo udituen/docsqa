@@ -91,8 +91,8 @@ if uploaded_file is not None:
             with st.spinner("Generating answer..."):
                 result = qa_chain({"query": query})
                 
-            st.success("Answer:")
-            st.write(result["result"])
+            st.success(f"Answer: {result['result']}")
+            st.write()
             
             # Show source documents
             with st.expander("📄 View source documents"):
