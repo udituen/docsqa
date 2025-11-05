@@ -1,4 +1,6 @@
 import streamlit as st
+from PyPDF2 import PdfReader
+import io
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
