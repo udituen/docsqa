@@ -89,8 +89,6 @@ if uploaded_file is not None:
         st.text_area("Content Preview", file_content.decode("utf-8"), height=200)
     else:
         st.info(f"📄 PDF uploaded: {uploaded_file.name}")
-
-query = st.text_input("Ask a question")
   
 query = st.text_input("Ask a question")
 
