@@ -120,4 +120,4 @@ if uploaded_file is not None:
     else:
         st.error("No content found in file. Please check your file.")
 else:
-    st.info("Please upload a `.txt` file or use the sample provided.")
+    st.info("Please upload a `.txt, .pdf` file or use the sample provided.")
