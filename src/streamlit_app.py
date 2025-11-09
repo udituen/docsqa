@@ -75,7 +75,7 @@ if 'document_processed' not in st.session_state:
     st.session_state.document_processed = False
 
 # Streamlit UI
-st.title("💬 DocsQA: Chat with Your Document")
+st.title("DocsQA: Chat with Your Document💬")
 
 st.markdown("Upload a document and have a conversation about its contents!")
 
@@ -94,10 +94,10 @@ with st.sidebar:
     uploaded_file = st.file_uploader("Upload your file", type=["txt", "pdf"])
     
     if uploaded_file is not None:
-        st.success(f"✅ {uploaded_file.name}")
+        st.success(f"{uploaded_file.name}")
         
         # Process document button
-        if st.button("🔄 Process Document", type="primary"):
+        if st.button("Process Document", type="primary"):
             with st.spinner("Processing document..."):
                 try:
                     docs = read_uploaded_file(uploaded_file)
