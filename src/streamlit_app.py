@@ -75,7 +75,7 @@ if 'document_processed' not in st.session_state:
     st.session_state.document_processed = False
 
 # Streamlit UI
-st.title("DocsQA: Chat with Your Document💬")
+st.title("DocsQA: Chat with Your Document")
 
 st.markdown("Upload a document and have a conversation about its contents!")
 
