@@ -53,7 +53,7 @@ def read_uploaded_file(uploaded_file):
 def load_llm():
     pipe = pipeline(
         "text2text-generation",
-        model="google/flan-t5-small",
+        model="google/flan-t5-large",
         max_length=256,
         temperature=0.7,
         top_p=0.95
@@ -85,7 +85,7 @@ with st.sidebar:
     
     # Add sample file download button
     st.download_button(
-        label="📥 Download Sample File",
+        label="📄 Download Sample File",
         data=SAMPLE_TEXT,
         file_name="sample_agri.txt",
         mime="text/plain"
@@ -122,7 +122,7 @@ with st.sidebar:
                         
                         st.session_state.document_processed = True
                         st.session_state.chat_history = []
-                        st.success(f"✅ Processed {len(docs)} text chunks!")
+                        st.success(f"Processed {len(docs)} text chunks!")
                         st.rerun()
                     else:
                         st.error("No content found in file.")
