@@ -4,7 +4,8 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import ConversationalRetrievalChain
 from langchain_community.llms import HuggingFacePipeline
 from langchain.memory import ConversationBufferMemory
-from transformers import pipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import torch
 import io
 
 # For PDF processing
@@ -48,16 +49,32 @@ def read_uploaded_file(uploaded_file):
     docs = [doc.strip() for doc in docs if doc.strip()]
     return docs
 
-# Load lightweight LLM
+# Load Qwen LLM
 @st.cache_resource
 def load_llm():
-    pipe = pipeline(
-        "text2text-generation",
-        model="google/flan-t5-large",
-        max_length=256,
-        temperature=0.7,
-        top_p=0.95
+    model_name = "Qwen/Qwen2.5-1.5B-Instruct"  # Using smaller Qwen model for efficiency
+    
+    # Load tokenizer and model
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+        device_map="auto" if torch.cuda.is_available() else None,
+        trust_remote_code=True
     )
+    
+    # Create pipeline
+    pipe = pipeline(
+        "text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        max_new_tokens=256,
+        temperature=0.7,
+        top_p=0.95,
+        do_sample=True,
+        return_full_text=False
+    )
+    
     return HuggingFacePipeline(pipeline=pipe)
 
 # Build retriever from uploaded content
@@ -77,7 +94,7 @@ if 'document_processed' not in st.session_state:
 # Streamlit UI
 st.title("DocsQA: Chat with Your Document")
 
-st.markdown("Upload a document and have a conversation about its contents!")
+st.markdown("Upload a document and have a conversation about its contents! (Powered by Qwen)")
 
 # Sidebar for document upload
 with st.sidebar:
